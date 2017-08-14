@@ -171,6 +171,53 @@ def clean_str(string, TREC=False):
     string = re.sub(r"\s{2,}", " ", string)
     return string.strip() if TREC else string.strip().lower()
 
+def get_idx_from_sent(sent, word_idx_map, max_length, filter_h=5):
+    """
+    Transforms sentence into a list of indices. Pad with zeroes.
+    """
+    x = []
+    pad = filter_h - 1
+    for i in xrange(pad):
+        x.append(0)
+    words = sent.split()
+    for word in words:
+        if word in word_idx_map:
+            x.append(word_idx_map[word])
+    while len(x) < max_length + 2 * pad:
+        x.append(0)
+    return x
+
+def make_idx_data_cv(revs, word_idx_map, max_length, num_classes, filter_h=5):
+    """
+    Transforms sentences into a 2-d matrix.
+    """
+    train_data, test_data = [], []
+    train_labels, test_labels = [], []
+    for rev in revs:
+        sent = get_idx_from_sent(rev["text"], word_idx_map, max_length, filter_h)
+        label = [0] * num_classes
+        label[rev["y"]] = 1
+        if rev["split"] == 0:
+            test_data.append(sent)
+            test_labels.append(label)
+        else:
+            train_data.append(sent)
+            train_labels.append(label)
+    train_data = np.array(train_data, dtype="int")
+    test_data = np.array(test_data, dtype="int")
+    train_labels = np.asarray(train_labels, dtype=np.float32)
+    test_labels = np.asarray(test_labels, dtype=np.float32)
+
+    return [train_data, train_labels, test_data, test_labels]
+
+def create_data(revs, word_idx_map, max_length, num_classes):
+    train_data, train_labels, test_data, test_labels = make_idx_data_cv(revs, word_idx_map, max_length, num_classes, 5)
+
+    shuffle_indices = np.random.permutation(np.arange(len(train_data)))
+    train_data = train_data[shuffle_indices]
+    train_labels = train_labels[shuffle_indices]
+
+    return train_data, train_labels, test_data, test_labels
 
 def process_data(file_name):
     if os.path.isfile(file_name):
@@ -208,3 +255,22 @@ def process_data(file_name):
     _pickle.dump([revs, W, W2, word_idx_map, vocab, max_length], open(file_name, "wb"))
 
     print ("Dataset Created!")
+
+def batch_iter(data, batch_size, num_epochs, shuffle=True):
+    """
+    Generates a batch iterator for a dataset
+    """
+    data = np.array(data)
+    data_size = len(data)
+    num_batches_per_epoch = int((len(data) - 1) / batch_size) + 1
+    for epoch in range(num_epochs):
+        if shuffle:
+            shuffled_indices = np.random.permutation(np.arange(data_size))
+            shuffled_data = data[shuffled_indices]
+        else:
+            shuffled_data = data
+        for batch_num in range(num_batches_per_epoch):
+            start_index = batch_num * batch_size
+            # min prevents end index from overfitting
+            end_index = min((batch_num + 1) * batch_size, data_size)
+            yield shuffled_data[start_index:end_index]
