@@ -81,18 +81,18 @@ def load_train(filename='data/sst1/sst1_train.txt'):
             y_train.append(classes[line.rstrip()])
     return x_train, y_train
 
-def load_test(filename='data/sst1/sst1_test.txt'):
+def load_dev(filename='data/sst1/sst1_dev.txt'):
     data = []
-    x_test = []
-    y_test = []
+    x_dev = []
+    y_dev = []
     with open(filename, 'r') as f:
         data.extend(f.readlines())
     for i, line in enumerate(data):
         if i % 2 == 0:
-            x_test.append(line.rstrip())
+            x_dev.append(line.rstrip())
         if i % 2 == 1:
-            y_test.append(classes[line.rstrip()])
-    return x_test, y_test
+            y_dev.append(classes[line.rstrip()])
+    return x_dev, y_dev
 
 
 def build_data_cv(clean_string=True):
@@ -102,7 +102,7 @@ def build_data_cv(clean_string=True):
     revs = []
     vocab = defaultdict(float)
     x_train, y_train = load_train()
-    x_test, y_test = load_test()
+    x_dev, y_dev = load_dev()
     for i in range(len(x_train)):
         rev = []
         rev.append(x_train[i].strip())
@@ -120,10 +120,10 @@ def build_data_cv(clean_string=True):
              "split": 1
             }
         revs.append(datum)
-    print (revs[0], revs[1])
-    for i in range(len(x_test)):
+    # print (revs[0], revs[1])
+    for i in range(len(x_dev)):
         rev = []
-        rev.append(x_test[i].strip())
+        rev.append(x_dev[i].strip())
         if clean_string:
             orig_rev = clean_str(" ".join(rev))
         else:
@@ -132,7 +132,7 @@ def build_data_cv(clean_string=True):
         for word in words:
             vocab[word] += 1
         datum = \
-            {"y":y_test[i],
+            {"y":y_dev[i],
              "text": orig_rev,
              "num_words": len(orig_rev.split()),
              "split": 0

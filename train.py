@@ -1,9 +1,8 @@
 import _pickle
-import process_data_sst1
 import tensorflow as tf
 
 from model import TextCNN
-from process_data_sst1 import create_data, batch_iter
+from utils import process_data, create_data, batch_iter
 import time
 import datetime
 import os
@@ -39,10 +38,10 @@ print ("")
 # Data Preparation
 # ==========================================================
 print ("Loading Data...")
-process_data_sst1.process_data("data/processed/sst1.p")
+process_data("data/processed/sst1.p")
 x = _pickle.load(open("data/processed/sst1.p", "rb"))
 revs, embedding, W2, word_idx_map, vocab, max_length = x[0], x[1], x[2], x[3], x[4], x[5]
-x_train, y_train, x_test, y_test = create_data(revs, word_idx_map, max_length, FLAGS.num_classes)
+x_train, y_train, x_dev, y_dev = create_data(revs, word_idx_map, max_length, FLAGS.num_classes)
 
 
 # Training
@@ -95,12 +94,12 @@ with tf.Graph().as_default():
         # Train summaries
         train_summary_op = tf.summary.merge([loss_summary, acc_summary])
         train_summary_dir = os.path.join(out_dir, "summaries", "train")
-        train_summary_writer = tf.summary.FileWriter(train_summary_dir, sess.graph_def)
+        train_summary_writer = tf.summary.FileWriter(train_summary_dir, sess.graph)
 
         # Test summaries (evaluation)
         test_summary_op = tf.summary.merge([loss_summary, acc_summary])
         test_summary_dir = os.path.join(out_dir, "summaries", "test")
-        test_summary_writer = tf.summary.FileWriter(test_summary_dir, sess.graph_def)
+        test_summary_writer = tf.summary.FileWriter(test_summary_dir, sess.graph)
 
         # Checkpointing
         # -- saving the parameters of your model to restore them later on.
@@ -112,7 +111,6 @@ with tf.Graph().as_default():
         if not os.path.exists(checkpoint_dir):
             os.makedirs(checkpoint_dir)
         saver = tf.train.Saver(tf.global_variables(), max_to_keep=FLAGS.num_checkpoints)
-
 
         sess.run(tf.global_variables_initializer())
         sess.run(cnn.embedding_init, feed_dict={cnn.embedding_placeholder: embedding})
@@ -136,7 +134,7 @@ with tf.Graph().as_default():
             train_summary_writer.add_summary(summaries, step)
 
         # Evaluate the loss & accuracy on an arbitrary data set without dropout nor training ops
-        def test_step(x_batch, y_batch, writer=None):
+        def dev_step(x_batch, y_batch, writer=None):
             """
             Evaluates model on a test set
             """
@@ -153,7 +151,7 @@ with tf.Graph().as_default():
             if writer:
                 writer.add_summary(summaries, step)
 
-        batches = process_data_sst1.batch_iter(
+        batches = batch_iter(
             list(zip(x_train, y_train)), FLAGS.batch_size, FLAGS.num_epochs)
 
         for batch in batches:
@@ -162,49 +160,8 @@ with tf.Graph().as_default():
             current_step = tf.train.global_step(sess, global_step)
             if current_step % FLAGS.evaluate_every == 0:
                 print ("\nEvaluation:")
-                test_step(x_test, y_test, writer=test_summary_writer)
+                dev_step(x_dev, y_dev, writer=test_summary_writer)
                 print ("")
             if current_step % FLAGS.checkpoint_every == 0:
                 path = saver.save(sess, checkpoint_prefix, global_step=current_step)
                 print ("Saved model checkpoint to {}\n".format(path))
-#         # Training steps
-#         batch_size = FLAGS.batch_size
-#         num_epochs = FLAGS.num_epochs
-#         steps_per_epoch = int(len(train_labels) / batch_size)
-#         num_steps = steps_per_epoch * num_epochs
-#         epoch_num = 0
-#         learning_rate_decay = 1
-#         for step in range(num_steps):
-#             # Shuffle the data in each epoch
-#             if (step % steps_per_epoch == 0):
-#                 shuffle_indices = np.random.permutation(np.arange(len(train_data)))
-#                 train_data = train_data[shuffle_indices]
-#                 train_labels = train_labels[shuffle_indices]
-#                 print("epoch number %d" % epoch_num)
-#                 # Get test results on each epoch
-#                 test_step(train_data, train_labels, writer=test_summary_writer)
-#                 current_step = tf.train.global_step(sess, global_step)
-#                 path = saver.save(sess, checkpoint_prefix, global_step=current_step)
-#                 # feed_dict = {self.input_x: test_data, self.input_y: test_labels, self.dropout_keep_prob: 1.0}
-#                 # accuracy_out = sess.run(self.accuracy, feed_dict=feed_dict)
-#                 # print('Test accuracy: %.3f' % accuracy_out)
-#                 # On each 8 epochs we decay the learning rate
-#                 if(epoch_num == 8):
-#                         learning_rate_decay = learning_rate_decay*0.5
-#                 if(epoch_num == 16):
-#                         learning_rate_decay = learning_rate_decay*0.1
-#                 epoch_num += 1
-#             offset = (step * batch_size) % (train_labels.shape[0] - batch_size)
-#             batch_data = train_data[offset:(offset + batch_size), :]
-#             batch_labels = train_labels[offset:(offset + batch_size), :]
-#             # Setting all placeholders
-#             train_step(batch_data, batch_labels)
-#             # feed_dict = {self.input_x: batch_data, self.input_y: batch_labels, self.dropout_keep_prob: 0.5,
-#             #              self.learning_rate_decay: learning_rate_decay}
-#             # _, l, accuracy_out = sess.run(
-#             #     [self.optimizer, self.loss, self.accuracy], feed_dict=feed_dict)
-#         # Testing
-#         test_step(x_batch, y_batch, writer=test_summary_writer)
-#         # feed_dict = {self.input_x: test_data, self.input_y: test_labels, self.dropout_keep_prob: 1.0}
-#         # accuracy_out = sess.run(self.accuracy, feed_dict=feed_dict)
-#         # print('Test accuracy: %.3f' % accuracy_out)
