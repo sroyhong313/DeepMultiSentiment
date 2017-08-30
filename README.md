@@ -23,7 +23,8 @@ All credits go to them.
 
 ## Usage
 ### Preperation:
-1) Clone the repository  via ```console
+1) Clone the repository  via
+```console
 git clone https://github.com/sroyhong313/DeepMultiSentiment.git
 ```
 2) Download Google's word embeddings binary file, extract it, and place it under `data/` folder
