@@ -22,7 +22,7 @@ All credits go to them.
 - six
 
 ## Usage
-### Preperation:
+
 1) Clone the repository  via
 ```console
 git clone https://github.com/sroyhong313/DeepMultiSentiment.git
@@ -31,7 +31,7 @@ git clone https://github.com/sroyhong313/DeepMultiSentiment.git
 
 ### Running:
 ```python
-python train.py --help
+python train.py - -help
 ```
 This lists all the flags and the variables that can be edited to train the model.
 
