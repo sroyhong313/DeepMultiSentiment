@@ -1,4 +1,4 @@
-# Convolutional Neural Network for Sentence Classification, in TensorFlow
+# ConvNet for Sentence Classification in TensorFlow
 This is a TensorFlow implementation of the model in Yoon Kim's [Convolutional Neural Networks for Sentence Classification](http://www.aclweb.org/anthology/D14-1181).
 
 The model achieves high accuracy in classifying text into correct labels depending on the sentiment of the sentence.
