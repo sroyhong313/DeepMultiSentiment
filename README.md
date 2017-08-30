@@ -24,20 +24,20 @@ All credits go to them.
 ## Usage
 
 1) Clone the repository  via
-```console
+```bash
 git clone https://github.com/sroyhong313/DeepMultiSentiment.git
 ```
 2) Download Google's word embeddings binary file, extract it, and place it under `data/` folder
 
 ### Running:
-```python
+```bash
 python train.py - -help
 ```
 This lists all the flags and the variables that can be edited to train the model.
 
 To train the model using default variables, run the following:
 
-```python
+```bash
 python train.py
 ```
 
