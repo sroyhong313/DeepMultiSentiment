@@ -31,7 +31,7 @@ git clone https://github.com/sroyhong313/DeepMultiSentiment.git
 
 ### Running:
 ```bash
-python train.py - -help
+python train.py --help
 ```
 This lists all the flags and the variables that can be edited to train the model.
 
